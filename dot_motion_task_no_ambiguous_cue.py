@@ -128,7 +128,6 @@ trials = data.TrialHandler(nReps=num_trials, method='random',
 
 thisExp.addLoop(trials)  # add the loop to the experiment
 thisTrial = trials.trialList[0]  # so we can initialise stimuli with some values
-
 for thisTrial in trials:
     currentLoop = trials
     # abbreviate parameter names if possible (e.g. rgb = thisTrial.rgb)
@@ -140,7 +139,7 @@ for thisTrial in trials:
     t = 0
     trialClock.reset()  # clock 
     frameN = -1
-    routineTimer.add(18.000000)
+    routineTimer.add(20.000000)
     
     # update component parameters for each repeat
 
@@ -154,29 +153,28 @@ for thisTrial in trials:
 
     is_cued = np.random.rand() < 0.5 # whether or not trial type is cued
     is_left = np.random.rand() < 0.5  # left vs right
-    
-    # logic for what type of trial this is:
-    if is_cued:  # are we cuing how hard the trial is?
-        if not this_coherence_hard:
-            this_cue = cue1
-        else:
-            this_cue = cue2
+
+    if this_coherence_hard:
+       this_cue = cue1
+    else:
+       this_cue = cue2
     # Set angle of cue
     if is_left:
         dots.dir = 180
     else:
         dots.dir = 0
 
-    # JMP: add cue timing
-    # need to track both onset time and duration for each cue
     #fix_cross_duration = 1 + 1 * np.random.rand()  # uniform random between 1 and 2
-    fix_cross_duration = 3.
-    cue_onset = 4.
-    dots_onset = (fix_cross_duration + cue_onset + 1.)
+    fix_cross_duration = 2.
+    cue_duration = 3.
+    dots_onset = (fix_cross_duration + cue_duration + 1.)
+    dots_max_duration = 20.
     feedback_duration = 1.
 
     key_response = event.BuilderKeyResponse()  # create an object of type KeyResponse
     key_response.status = NOT_STARTED
+    has_response = False
+    begin_ITI = False
     
     # keep track of which components have finished
     trialComponents = []
@@ -185,6 +183,11 @@ for thisTrial in trials:
     trialComponents.append(this_cue)
     trialComponents.append(dots)
     trialComponents.append(key_response)
+    trialComponents.append(feedback_cue_correct)
+    for thisComponent in trialComponents:
+        if hasattr(thisComponent, 'status'):
+            thisComponent.status = NOT_STARTED
+    trialComponents.append(feedback_cue_incorrect)
     for thisComponent in trialComponents:
         if hasattr(thisComponent, 'status'):
             thisComponent.status = NOT_STARTED
@@ -195,7 +198,8 @@ for thisTrial in trials:
     while continueRoutine and routineTimer.getTime() > 0:
         # get current time
         t = trialClock.getTime()
-        frameN = frameN + 1  # number of completed frames (so 0 is the first frame)
+        frameN = frameN + 1.
+        # number of completed frames (so 0 is the first frame)
         # update/draw components on each frame
 
         # *Fixation_Cross* updates
@@ -214,19 +218,9 @@ for thisTrial in trials:
             this_cue.frameNStart = frameN  # exact frame index
             this_cue.setAutoDraw(True)
             offset = trigger.flicker_block(8)
-        if this_cue.status == STARTED and t >= (cue_onset+ (fix_cross_duration-win.monitorFramePeriod*.75)): #most of one frame period left
+        if this_cue.status == STARTED and t >= (cue_duration + (fix_cross_duration-win.monitorFramePeriod*.75)): #most of one frame period left
             this_cue.setAutoDraw(False)
 
-        # *dots* updates
-        if t >= dots_onset and dots.status == NOT_STARTED:
-            # keep track of start time/frame for later
-            dots.tStart = trial_start_time + t  # underestimates by a little under one frame
-            dots.frameNStart = frameN  # exact frame index
-            dots.setAutoDraw(True)
-            offset = trigger.flicker_block(32)
-        if dots.status == STARTED and t >= (dots_onset +(20-win.monitorFramePeriod*.75)): #most of one frame period left
-            dots.setAutoDraw(False)
-        
         # *key_response* updates
         if t >= dots_onset and key_response.status == NOT_STARTED:
             # keep track of start time/frame for later
@@ -236,50 +230,68 @@ for thisTrial in trials:
             # keyboard checking is just starting
             win.callOnFlip(key_response.clock.reset)  # t=0 on next screen flip
             event.clearEvents(eventType='keyboard')
-        if key_response.status == STARTED and t >= (dots_onset + (20-win.monitorFramePeriod*.75)): #most of one frame period left
+        if key_response.status == STARTED and t >= (dots_onset + (dots_max_duration -win.monitorFramePeriod*.75)): #most of one frame period left
             key_response.status = STOPPED
         if key_response.status == STARTED:
             theseKeys = event.getKeys(keyList=['left', 'right', 'escape'])
-       
 
-            # JMP: this whole section handles keyboard input
-            # check for quit:
-            if 'escape' in theseKeys:
-                endExpNow = True
-            if len(theseKeys) > 0:  # at least one key was pressed
-                key_response.keys = theseKeys[-1]  # just the last key pressed
-                key_response.rt = key_response.clock.getTime()
-                offset = trigger.flicker_block(128)
-                
-                # was this 'correct'?
-                if dots.dir == 0 and key_response.keys == 'right':
-                    key_response.corr = 1
-                elif dots.dir == 180 and key_response.keys == 'left':
-                    key_response.corr = 1
-                else:
-                    key_response.corr = 0
-                if dots.coherence == 0:
-                    key_response.corr = 1
+	    # check for quit:
+	    if 'escape' in theseKeys:
+	        endExpNow = True
+	    if len(theseKeys) > 0:  # at least one key was pressed
+	        key_response.keys = theseKeys[-1]  # just the last key pressed
+	        key_response.rt = key_response.clock.getTime()
+	        has_response = True
+	        offset = trigger.flicker_block(128)
+	
+	    # was this 'correct'?
+	    if dots.dir == 0 and key_response.keys == 'right':
+		key_response.corr = 1
+	    elif dots.dir == 180 and key_response.keys == 'left':
+		key_response.corr = 1
+	    else:
+		key_response.corr = 0
+	    if dots.coherence == 0:
+		key_response.corr = 1
+	    
+	    if key_response.corr == 1:
+		this_feedback_cue = feedback_cue_correct
+	    elif key_response.corr == 0:
+		this_feedback_cue = feedback_cue_incorrect
 
-                # correct vs incorrect feedback cues
-                if t>= key_response.rt and key_response.corr == 1:
-                    feedback_cue_correct.setAutoDraw(True)
-                elif t>= key_response.rt and key_response.corr == 0:
-                    feedback_cue_incorrect.setAutoDraw(True)
-                    offset = trigger.flicker_block(256)
-                if t>= (key_response.rt + (feedback_duration-win.monitorFramePeriod*.75)):
-                    feedback_cue_correct.setAutoDraw(False)
-                    feedback_cue_incorrect.setAutoDraw(False)
+        # *dots* updates
+        if t >= dots_onset and dots.status == NOT_STARTED:
+            # keep track of start time/frame for later
+            dots.tStart = trial_start_time + t  # underestimates by a little under one frame
+  	    dots.frameNStart = frameN  # exact frame index
+            dots.setAutoDraw(True)
+            offset = trigger.flicker_block(32)
+        if (dots.status == STARTED and t >= (dots_onset + (dots_max_duration -win.monitorFramePeriod*.75))) or has_response: #most of one frame period left
+            dots.setAutoDraw(False)
 
-                
-                win.flip()
-                ISI.tStart = t  # underestimates by a little under one frame
-                ISI.frameNStart = frameN  # exact frame index
-                ISI.start(1)
-                ISI.complete()
+	# *feedback_cue* update
+	if has_response and this_feedback_cue.status == NOT_STARTED:
+            # keep track of start time/frame for later
+            this_feedback_cue.tStart = trial_start_time + t  # underestimates by a little under one frame
+	    feedback_start_time = t
+            this_feedback_cue.frameNStart = frameN  # exact frame index
+            this_feedback_cue.setAutoDraw(True)
+            offset = trigger.flicker_block(256)
+        if has_response and this_feedback_cue.status == STARTED and t >= (feedback_start_time + (feedback_duration-win.monitorFramePeriod*.75)): #most of one frame period left
+            this_feedback_cue.setAutoDraw(False)
+	    begin_ITI = True
+            
+        
+	# Inter-trial interval
+        if begin_ITI:
+	    win.flip()
+	    ISI.tStart = trial_start_time + t  
+	    ISI.frameNStart = frameN  # exact frame index
+	    ISI.start(1)
+	    ISI.complete()
+	    continueRoutine = False  # trial is now over
 
-                # a response ends the routine
-                continueRoutine = False
+        
 
 
 
@@ -316,7 +328,9 @@ for thisTrial in trials:
     trials.addData('cue_starttime', this_cue.tStart)
     trials.addData('dots_starttime', dots.tStart)
     trials.addData('response_starttime', key_response.tStart)
+    trials.addData('feedback_cue_starttime', this_feedback_cue.tStart)
 
+    
     if key_response.keys != None:  # we had a response
         trials.addData('key_response.rt', key_response.rt)
     thisExp.nextEntry()
@@ -328,6 +342,7 @@ thisExp.saveAsWideText(filename+'.csv')
 thisExp.saveAsPickle(filename)
 logging.flush()
 # make sure everything is closed down
-thisExp.abort() # or data files will save again on exit
+thisExp.abort() 
+# or data files will save again on exit
 win.close()
 core.quit()
