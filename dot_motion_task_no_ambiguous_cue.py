@@ -208,7 +208,7 @@ for thisTrial in trials:
             Fixation_Cross.tStart = trial_start_time + t   # underestimates by a little under one frame
             Fixation_Cross.frameNStart = frameN  # exact frame index
             Fixation_Cross.setAutoDraw(True)
-            offset = trigger.flicker_block(2)
+            offset = trigger.flicker(2)
         if Fixation_Cross.status == STARTED and t >= (0.0 + (fix_cross_duration-win.monitorFramePeriod*.75)): #most of one frame period left
             Fixation_Cross.setAutoDraw(False)
 
@@ -217,7 +217,7 @@ for thisTrial in trials:
             this_cue.tStart = trial_start_time + t  # underestimates by a little under one frame
             this_cue.frameNStart = frameN  # exact frame index
             this_cue.setAutoDraw(True)
-            offset = trigger.flicker_block(8)
+            offset = trigger.flicker(8)
         if this_cue.status == STARTED and t >= (cue_duration + (fix_cross_duration-win.monitorFramePeriod*.75)): #most of one frame period left
             this_cue.setAutoDraw(False)
 
@@ -242,7 +242,7 @@ for thisTrial in trials:
 	        key_response.keys = theseKeys[-1]  # just the last key pressed
 	        key_response.rt = key_response.clock.getTime()
 	        has_response = True
-	        offset = trigger.flicker_block(128)
+	        offset = trigger.flicker(128)
 	
 	    # was this 'correct'?
 	    if dots.dir == 0 and key_response.keys == 'right':
@@ -265,7 +265,7 @@ for thisTrial in trials:
             dots.tStart = trial_start_time + t  # underestimates by a little under one frame
   	    dots.frameNStart = frameN  # exact frame index
             dots.setAutoDraw(True)
-            offset = trigger.flicker_block(32)
+            offset = trigger.flicker(32)
         if (dots.status == STARTED and t >= (dots_onset + (dots_max_duration -win.monitorFramePeriod*.75))) or has_response: #most of one frame period left
             dots.setAutoDraw(False)
 
@@ -276,7 +276,7 @@ for thisTrial in trials:
 	    feedback_start_time = t
             this_feedback_cue.frameNStart = frameN  # exact frame index
             this_feedback_cue.setAutoDraw(True)
-            offset = trigger.flicker_block(256)
+            offset = trigger.flicker(256)
         if has_response and this_feedback_cue.status == STARTED and t >= (feedback_start_time + (feedback_duration-win.monitorFramePeriod*.75)): #most of one frame period left
             this_feedback_cue.setAutoDraw(False)
 	    begin_ITI = True
